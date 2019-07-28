@@ -18,9 +18,26 @@ function drawPiece(display, index, rotation, xPos, yPos) {
   }
 }
 
+class Timer {
+  constructor(interval = 1000) {
+    this._lastUpdate = null;
+    this._interval = interval;
+  }
+
+  update() {
+    const now = new Date().getTime();
+
+    if (!this._lastUpdate || now - this._lastUpdate > this._interval) {
+      this._lastUpdate = now;
+      return true;
+    }
+  }
+}
+
 class GameState {
   constructor() {
     this.keys = '';
+    this.timer = new Timer(1000);
   }
 
   start() {
@@ -43,9 +60,9 @@ class GameState {
     const lines = this.keys.split('\r');
 
     const now = new Date().getTime();
-    const index = Math.floor(Math.floor(now / 4000));
 
-    const rotation = Math.floor(Math.floor(now / 1000));
+    const index = Math.floor(Math.floor(now / 4000));
+    const rotation = Math.floor(now / 1000);
 
     drawPiece(display, index, rotation, 0, 5);
     drawPiece(display, index + 1, rotation, 10, 5);
@@ -56,14 +73,11 @@ class GameState {
 
     display.setCursorPosition(0, 2).printText(`index: ${index % Tetrominoes.length} rotation: ${rotation % 4}   `);
 
-    display.setCursorPosition(0, 0)
-    /*
-    for (let i = 0; i < lines.length; i++) {
-      display
-        .setCursorPosition(5, 5 + i)
-        .printText(lines[i])
-    }
-    */
+    display
+      .setCursorPosition(1, 1)
+      .printText(`Tetrijs ${this.keys}`, { fg: 16 + Math.floor(now / 250) % (255-16) });
+
+    //display.setCursorPosition(0, 0)
   }
 }
 

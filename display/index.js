@@ -68,6 +68,8 @@ function updateColor(prevFg, prevBg, newFg, newBg, cb) {
   if (!equalFg) { result.push(ANSI.fgColor(newFg)); }
   if (!equalBg) { result.push(ANSI.bgColor(newBg)); }
 
+  // process.stderr.write(JSON.stringify({newFg, newBg}) + "\n");
+
   cb(`\x1b[${result.join(';')}m`);
   return;
 };
@@ -120,8 +122,6 @@ class Display {
 
     let changed = false;
 
-    out += ANSI.cursorVisible(false);
-
     if (this._wasJustResized) {
       changed = true;
       this._wasJustResized = false;
@@ -158,7 +158,8 @@ class Display {
       out += ANSI.cursorPosition(this.y + 1, this.x + 1);
       out += ANSI.cursorVisible(true);
 
-      process.stdout.write(out);
+      process.stdout.write(ANSI.cursorVisible(false) + out);
+      // process.stderr.write(JSON.stringify(out) + "\n");
     }
   }
 

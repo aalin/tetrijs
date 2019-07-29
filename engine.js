@@ -43,6 +43,11 @@ class Engine {
       return;
     }
 
+    if (key === '\f') {
+      this.display.forceRedraw();
+      return;
+    }
+
     const match = key.match(/^\x1b\[(\d+);(\d+)R$/);
 
     if (match) {

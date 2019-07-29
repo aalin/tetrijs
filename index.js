@@ -2,6 +2,8 @@ const Input = require('./input');
 const Engine = require('./engine.js');
 const Tetrominos = require('./tetromino');
 
+const palette256 = require('./display/palette').palette256;
+
 function drawPiece(display, index, rotation, left, top, xPos, yPos) {
   const tetromino = Tetrominos.get(index);
   const data = tetromino.getRotation(rotation);
@@ -46,6 +48,37 @@ function drawFrame(display, top, right, bottom, left) {
     .putCell(BOX_CHARS[4], attrs)
     .setCursorPosition(right, bottom)
     .putCell(BOX_CHARS[5], attrs)
+}
+
+function rgbpalette(x, fn = x => x) {
+  return Array.from( { length: 3 }, (_, i) => (
+    Math.floor(
+      256 * Math.sin((x + i / 3.0) * Math.PI) ** 2
+    )
+  ));
+}
+
+function drawBackground(display, top, right, bottom, left) {
+  const w = right - left;
+  const h = bottom - top;
+
+  const t = new Date().getTime() / 1000.0;
+
+  const scale = 2.2;
+
+  for (let y = top + 1; y < bottom; y++) {
+    for (let x = left + 1; x < right; x++) {
+      const value = (
+        Math.sin(x / 16.0 * scale + t) +
+        Math.sin(y / 8.0 * scale + t) +
+        Math.sin((x + y + t) / 16.0 * scale) +
+        Math.sin(Math.sqrt(x * x + y * y) / 8.0 * scale) +
+        4
+      ) / 8.0;
+
+      display.setCursorPosition(x, y).putCell(' ', { bg: palette256(...rgbpalette(value).map(f => f * 0.5)) });
+    }
+  }
 }
 
 class Timer {
@@ -124,6 +157,7 @@ class GameState {
             this.pieceId = Number(key);
             this.pieceY = 0;
           }
+
           this.keys += key;
           break;
       }
@@ -148,6 +182,7 @@ class GameState {
 
     display.hideCursor();
 
+    display.setCursorPosition(0, 1).printText(`str: ${JSON.stringify(this.keys)}`)
     display.setCursorPosition(0, 2).printText(`index: ${index % Tetrominos.length} rotation: ${rotation % 4}`);
     display.setCursorPosition(0, 3).printText(`X: ${this.pieceX} Y: ${this.pieceY}`);
 
@@ -157,9 +192,10 @@ class GameState {
       .printText(`Tetrijs ${this.keys}`, { fg: 16 + Math.floor(now / 250) % (255-16) });
     */
 
-    drawPiece(display, index, this.pieceRotation, left, 3, this.pieceX, this.pieceY);
-
+    drawBackground(display, 2, right, 2 + this.grid.height, left);
     drawFrame(display, 2, right, 2 + this.grid.height, left);
+
+    drawPiece(display, index, this.pieceRotation, left, 3, this.pieceX, this.pieceY);
 
     /*
     drawPiece(display, index + 1, rotation, 10, 5);

@@ -69,7 +69,7 @@ function updateColor(prevFg, prevBg, newFg, newBg) {
 
   // process.stderr.write(JSON.stringify({newFg, newBg}) + "\n");
 
-  return result.map(s => `\x1b[${s}m`).join('');
+  //return result.map(s => `\x1b[${s}m`).join('');
   return `\x1b[${result.join(';')}m`;
 };
 
@@ -128,6 +128,41 @@ class Display {
     this.handleResize();
   }
 
+  forceRedraw() {
+    let out = '';
+    let prevBg = null;
+    let prevFg = null;
+
+    out += ANSI.cursorVisible(false);
+    out += ANSI.eraseInDisplay(2);
+
+    for (let y = 0; y < this.rows; y++) {
+      out += ANSI.cursorPosition(y + 1, 1);
+
+      for (let x = 0; x < this.cols; x++) {
+        const cell = this.getCell(x, y);
+
+        const colorCode = updateColor(prevFg, prevBg, cell.fg, cell.bg);
+
+        if (colorCode) {
+          out += colorCode;
+          prevFg = cell.fg;
+          prevBg = cell.bg;
+        }
+
+        out += codePointToChar(cell.cp);
+      }
+    }
+
+    out += ANSI.cursorPosition(this.y + 1, this.x + 1);
+
+    if (this.cursorVisible) {
+      out += ANSI.cursorVisible(true);
+    }
+
+    process.stdout.write(out);
+  }
+
   draw() {
     let out = '';
 
@@ -147,8 +182,9 @@ class Display {
       changed = true;
 
       for (let [start, end] of ranges) {
+        out += ANSI.cursorPosition(y + 1, start + 1);
+
         for (let x = start; x < end; x++) {
-          out += ANSI.cursorPosition(y + 1, x + 1);
           const cell = this.getCell(x, y);
 
           const colorCode = updateColor(prevFg, prevBg, cell.fg, cell.bg);
@@ -173,10 +209,13 @@ class Display {
       */
       const newBuffer = this.prevBuffer;
       this.prevBuffer = this.buffer;
-      this.buffer = newBuffer ? Cell.resetBuffer(newBuffer) : Cell.createBuffer(this.cols, this.rows);
+      this.buffer = Cell.resetBuffer(newBuffer);
 
       out += ANSI.cursorPosition(this.y + 1, this.x + 1);
-      out += ANSI.cursorVisible(this.cursorVisible);
+
+      if (this.cursorVisible) {
+        out += ANSI.cursorVisible(true);
+      }
 
       process.stdout.write(ANSI.cursorVisible(false) + out);
       // process.stderr.write(JSON.stringify(out) + "\n");
@@ -293,7 +332,7 @@ class Display {
     this.cols = process.stdout.columns;
     this.rows = process.stdout.rows;
     this.buffer = Cell.createBuffer(this.cols, this.rows);
-    this.prevBuffer = null;
+    this.prevBuffer = Cell.createBuffer(this.cols, this.rows);
     this._wasJustResized = true;
   }
 }

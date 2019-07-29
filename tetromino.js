@@ -60,7 +60,7 @@ class Tetromino {
     this.rotations = Array.from({ length: 4 }, (_, j) => rotatePiece(data, j));
     this.color = color;
     this.size = data.length;
-    this.halfSize = data.length / 2;
+    this.halfSize = Math.floor(data.length / 2);
   }
 
   getRotation(rotation) {

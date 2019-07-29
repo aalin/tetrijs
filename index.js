@@ -7,11 +7,12 @@ const palette256 = require('./display/palette').palette256;
 function drawPiece(display, index, rotation, left, top, xPos, yPos) {
   const tetromino = Tetrominos.get(index);
   const data = tetromino.getRotation(rotation);
+  const halfSize = tetromino.halfSize;
 
   for (let y = 0; y < tetromino.size; y++) {
     for (let x = 0; x < tetromino.size; x++) {
       if (data[y][x]) {
-        display.setCursorPosition(left + (xPos + x) * 2, top + yPos + y);
+        display.setCursorPosition(left + 1 + (xPos + x) * 2, top + yPos + y);
         display.printText("[]", { bg: tetromino.color, fg: 15 })
       }
     }
@@ -107,10 +108,32 @@ class Grid {
   constructor(width, height) {
     this.width = width;
     this.height = height;
+    this.data = Array.from({ length: width * height }, () => 0);
   }
 
   doesTetrominoFit(tetrominoData, x, y) {
     return true;
+  }
+
+  pieceCollisionOffset(pieceId, rotation, pieceX) {
+    const tetromino = Tetrominos.get(pieceId);
+    const data = tetromino.getRotation(rotation);
+
+    for (let x = 0; x < data.length; x++) {
+      for (let y = 0; y < data.length; y++) {
+        if (data[y][x]) {
+          if (pieceX + x < 0) {
+            return 1;
+          }
+
+          if (pieceX + x >= this.width) {
+            return -1;
+          }
+        }
+      }
+    }
+
+    return 0;
   }
 }
 
@@ -141,11 +164,11 @@ class GameState {
           break;
         case Input.KEYS.LEFT:
         case 'j':
-          this.pieceX = Math.max(0, this.pieceX - 1);
+          this.pieceX = this.pieceX - 1;
           break;
         case Input.KEYS.RIGHT:
         case 'l':
-          this.pieceX = Math.min(this.grid.width, this.pieceX + 1);
+          this.pieceX = this.pieceX + 1;
           break;
         case ' ':
         case 'k':
@@ -163,6 +186,8 @@ class GameState {
       }
     }
 
+    this.pieceX += this.grid.pieceCollisionOffset(this.pieceId, this.pieceRotation, this.pieceX);
+
     if (this.timer.update()) {
       this.pieceY += 1;
     }
@@ -176,9 +201,10 @@ class GameState {
     const index = this.pieceId;
     const rotation = this.pieceRotation;
 
+    const halfWidth = this.grid.width / 2;
     const center = Math.ceil(display.cols / 2);
-    const left = center - this.grid.width;
-    const right = center + this.grid.height;
+    const left = center - halfWidth * 2;
+    const right = center + halfWidth * 2;
 
     display.hideCursor();
 
@@ -192,8 +218,8 @@ class GameState {
       .printText(`Tetrijs ${this.keys}`, { fg: 16 + Math.floor(now / 250) % (255-16) });
     */
 
-    drawBackground(display, 2, right, 2 + this.grid.height, left);
-    drawFrame(display, 2, right, 2 + this.grid.height, left);
+    drawBackground(display, 2, right + 1, 2 + this.grid.height, left);
+    drawFrame(display, 2, right + 1, 2 + this.grid.height, left);
 
     drawPiece(display, index, this.pieceRotation, left, 3, this.pieceX, this.pieceY);
 

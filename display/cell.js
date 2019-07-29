@@ -48,6 +48,11 @@ class Cell {
     return createBuffer(cols, rows);
   }
 
+  static resetBuffer(buffer) {
+    buffer.fill(DEFAULT_CELL);
+    return buffer;
+  }
+
   write(buffer, index) {
     return writeCell(buffer, index, this);
   }

@@ -8,7 +8,7 @@ function color(index, offset) {
   if (index < 8) {
     return 30 + offset + index;
   } else if (index < 16) {
-    return 90 + offset + index;
+    return 90 + offset + index - 8;
   } else {
     return `${38 + offset};5;${index}`;
   }

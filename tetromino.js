@@ -55,9 +55,27 @@ function rotatePiece(piece, rotation) {
   ));
 }
 
-const Tetrominoes = Array.from(PIECE_DATA, (data, i) => ({
-  rotations: Array.from({ length: 4 }, (_, j) => rotatePiece(data, j)),
-  color: ANSI_COLORS.indexOf(PIECE_COLORS[i])
-}));
+class Tetromino {
+  constructor(data, color) {
+    this.rotations = Array.from({ length: 4 }, (_, j) => rotatePiece(data, j));
+    this.color = color;
+    this.size = data.length;
+    this.halfSize = data.length / 2;
+  }
 
-module.exports = Tetrominoes;
+  getRotation(rotation) {
+    return this.rotations[rotation % this.rotations.length];
+  }
+}
+
+const Tetrominoes = Array.from(PIECE_DATA, (data, i) => (
+  new Tetromino(data, ANSI_COLORS.indexOf(PIECE_COLORS[i]))
+));
+
+module.exports = {
+  length: Tetrominoes.length,
+
+  get(index) {
+    return Tetrominoes[index % Tetrominoes.length];
+  }
+};

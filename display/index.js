@@ -50,17 +50,16 @@ function createRanges(cells) {
   return ranges;
 }
 
-function updateColor(prevFg, prevBg, newFg, newBg, cb) {
+function updateColor(prevFg, prevBg, newFg, newBg) {
   const equalFg = prevFg === newFg;
   const equalBg = prevBg === newBg;
 
   if (equalFg && equalBg) {
-    return;
+    return null;
   }
 
   if (newFg === 0 && newBg === 0) {
-    cb(`\x1b[0m`);
-    return;
+    return `\x1b[0m`;
   }
 
   let result = [];
@@ -70,8 +69,8 @@ function updateColor(prevFg, prevBg, newFg, newBg, cb) {
 
   // process.stderr.write(JSON.stringify({newFg, newBg}) + "\n");
 
-  cb(`\x1b[${result.join(';')}m`);
-  return;
+  return result.map(s => `\x1b[${s}m`).join('');
+  return `\x1b[${result.join(';')}m`;
 };
 
 class Display {
@@ -82,6 +81,15 @@ class Display {
     this.handleResize = this.handleResize.bind(this);
     this.x = 0;
     this.y = 0;
+    this.cursorVisible = true;
+  }
+
+  hideCursor() {
+    this.cursorVisible = true;
+  }
+
+  hideCursor() {
+    this.cursorVisible = false;
   }
 
   start() {
@@ -94,9 +102,12 @@ class Display {
   }
 
   stop() {
-    process.stdout.write('\x1b[0m');
     process.stdout.removeListener('resize', this.handleResize);
-    process.stdout.write(ANSI.disableAlternateScreenBuffer());
+    process.stdout.write(
+      '\x1b[0m' +
+      ANSI.cursorVisible(true) +
+      ANSI.disableAlternateScreenBuffer()
+    );
     console.log('stopping display');
   }
 
@@ -140,11 +151,15 @@ class Display {
           out += ANSI.cursorPosition(y + 1, x + 1);
           const cell = this.getCell(x, y);
 
-          updateColor(prevFg, prevBg, cell.fg, cell.bg, (str) => {
-            out += str;
+          const colorCode = updateColor(prevFg, prevBg, cell.fg, cell.bg);
+
+          if (colorCode) {
+            out += colorCode;
+            // process.stderr.write(['changed fg code from', prevFg, 'to', cell.fg].join(' ') + '\n');
+            // process.stderr.write(['changed bg code from', prevBg, 'to', cell.bg].join(' ') + '\n');
             prevFg = cell.fg;
             prevBg = cell.bg;
-          });
+          }
 
           out += codePointToChar(cell.cp);
         }
@@ -152,11 +167,16 @@ class Display {
     }
 
     if (changed) {
+      /*
       this.prevBuffer = this.buffer;
       this.buffer = Cell.createBuffer(this.cols, this.rows);
+      */
+      const newBuffer = this.prevBuffer;
+      this.prevBuffer = this.buffer;
+      this.buffer = newBuffer ? Cell.resetBuffer(newBuffer) : Cell.createBuffer(this.cols, this.rows);
 
       out += ANSI.cursorPosition(this.y + 1, this.x + 1);
-      out += ANSI.cursorVisible(true);
+      out += ANSI.cursorVisible(this.cursorVisible);
 
       process.stdout.write(ANSI.cursorVisible(false) + out);
       // process.stderr.write(JSON.stringify(out) + "\n");
@@ -212,23 +232,26 @@ class Display {
 
   printText(text, attrs = {}) {
     for (let i = 0; i < text.length; i++) {
-      this.updateCell(this.x + i, this.y, cell => {
-        Object.assign(cell, attrs);
-        cell.cp = text.codePointAt(i);
-        return cell;
-      });
+      this.putCell(text[i], attrs);
     }
 
-    this.x += text.length;
+    return this;
+  }
+
+  putCell(char, attrs = {}) {
+    this.updateCell(this.x++, this.y, cell => {
+      Object.assign(cell, attrs);
+      cell.cp = char.codePointAt(0);
+      return cell;
+    });
+
+    return this;
   }
 
   getCell(x, y) {
     this.checkBounds(x, y);
     const index = y * this.cols + x;
     return Cell.read(this.buffer, index);
-  }
-
-  setCell(x, y, cell) {
   }
 
   checkBounds(x, y) {

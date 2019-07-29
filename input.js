@@ -30,11 +30,12 @@ class Input extends EventEmitter {
 }
 
 Input.KEYS = {
-  ETX: "\u0003",
-  UP: "\u001b[A",
-  DOWN: "\u001b[B",
-  RIGHT: "\u001b[C",
-  LEFT: "\u001b[D",
+  ETX: '\u0003',
+  BACKSPACE: '\x7f',
+  UP: '\u001b[A',
+  DOWN: '\u001b[B',
+  RIGHT: '\u001b[C',
+  LEFT: '\u001b[D',
 };
 
 module.exports = Input;

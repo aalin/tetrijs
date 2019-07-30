@@ -12,7 +12,7 @@ function drawPiece(display, index, rotation, left, top, xPos, yPos) {
   for (let y = 0; y < tetromino.size; y++) {
     for (let x = 0; x < tetromino.size; x++) {
       if (data[y][x]) {
-        display.setCursorPosition(left + 1 + (xPos + x) * 2, top + yPos + y);
+        display.setCursorPosition(Math.floor(left + 1 + (xPos - tetromino.size / 2 + x) * 2), top + yPos + y);
         display.printText("[]", { bg: tetromino.color, fg: 15 })
       }
     }
@@ -77,7 +77,9 @@ function drawBackground(display, top, right, bottom, left) {
         4
       ) / 8.0;
 
-      display.setCursorPosition(x, y).putCell(' ', { bg: palette256(...rgbpalette(value).map(f => f * 0.5)) });
+      const char = ' ';
+
+      display.setCursorPosition(x, y).putCell(char, { bg: palette256(...rgbpalette(value)) });
     }
   }
 }
@@ -109,10 +111,62 @@ class Grid {
     this.width = width;
     this.height = height;
     this.data = Array.from({ length: width * height }, () => 0);
+
+    this.timer = new Timer(1000);
+
+    this.pieceX = Math.floor(width / 2);
+    this.pieceY = 0;
+
+    this.pieceRotation = 0;
+    this.pieceId = 0;
   }
 
-  doesTetrominoFit(tetrominoData, x, y) {
-    return true;
+  start() {
+    this.setPiece(Math.floor(Math.random() * Tetrominos.length));
+  }
+
+  stop() {
+  }
+
+  moveRight() {
+    this.pieceX++;
+  }
+
+  moveLeft() {
+    this.pieceX--;
+  }
+
+  rotateRight() {
+    this.pieceRotation = (this.pieceRotation + 1) % 4;
+  }
+
+  rotateLeft() {
+    this.pieceRotation = (4 + this.pieceRotation - 1) % 4;
+  }
+
+  setPiece(id) {
+    this.pieceId = id;
+    this.pieceY = 0;
+    this.timer.reset();
+  }
+
+  update() {
+    this.pieceX += this.pieceCollisionOffset(this.pieceId, this.pieceRotation, this.pieceX);
+
+    if (this.timer.update()) {
+      this.pieceY++;
+    }
+  }
+
+  draw(display) {
+    const halfWidth = this.width / 2;
+    const center = Math.ceil(display.cols / 2);
+    const left = center - halfWidth * 2;
+    const right = center + halfWidth * 2;
+
+    drawBackground(display, 2, right + 1, 2 + this.height, left);
+    drawFrame(display, 2, right + 1, 2 + this.height, left);
+    drawPiece(display, this.pieceId, this.pieceRotation, left, 3, this.pieceX, this.pieceY);
   }
 
   pieceCollisionOffset(pieceId, rotation, pieceX) {
@@ -121,14 +175,28 @@ class Grid {
 
     for (let x = 0; x < data.length; x++) {
       for (let y = 0; y < data.length; y++) {
-        if (data[y][x]) {
-          if (pieceX + x < 0) {
-            return 1;
-          }
+        if (!data[y][x]) {
+          continue;
+        }
 
-          if (pieceX + x >= this.width) {
-            return -1;
-          }
+        const leftDiff = x + pieceX - tetromino.size / 2;
+
+        if (leftDiff < 0) {
+          return -leftDiff;
+        }
+      }
+    }
+
+    for (let x = data.length - 1; x >= 0; x--) {
+      for (let y = 0; y < data.length; y++) {
+        if (!data[y][x]) {
+          continue;
+        }
+
+        const right = x + pieceX - tetromino.size / 2 + 1;
+
+        if (right > this.width) {
+          return this.width - right;
         }
       }
     }
@@ -140,20 +208,15 @@ class Grid {
 class GameState {
   constructor() {
     this.keys = '';
-    this.timer = new Timer(1000);
-
-    this.pieceX = 5;
-    this.pieceY = 0;
-    this.pieceRotation = 0;
-    this.pieceId = 0;
-
-    this.grid = new Grid(10, 20);
+    this.grid = new Grid(15, 30);
   }
 
   start() {
+    this.grid.start();
   }
 
   stop() {
+    this.grid.stop();
   }
 
   update(engine, keys) {
@@ -164,21 +227,26 @@ class GameState {
           break;
         case Input.KEYS.LEFT:
         case 'j':
-          this.pieceX = this.pieceX - 1;
+        case 'J':
+          this.grid.moveLeft();
           break;
         case Input.KEYS.RIGHT:
         case 'l':
-          this.pieceX = this.pieceX + 1;
+        case 'L':
+          this.grid.moveRight();
           break;
         case ' ':
         case 'k':
-          this.pieceRotation++;
-          this.pieceRotation %= 4;
+        case 'z':
+          this.grid.rotateRight();
+          break;
+        case 'K':
+        case 'Z':
+          this.grid.rotateLeft();
           break;
         default:
           if (/^\d$/.test(key)) {
-            this.pieceId = Number(key);
-            this.pieceY = 0;
+            this.grid.setPiece(Number(key));
           }
 
           this.keys += key;
@@ -186,11 +254,7 @@ class GameState {
       }
     }
 
-    this.pieceX += this.grid.pieceCollisionOffset(this.pieceId, this.pieceRotation, this.pieceX);
-
-    if (this.timer.update()) {
-      this.pieceY += 1;
-    }
+    this.grid.update();
   }
 
   draw(engine, display) {
@@ -198,13 +262,8 @@ class GameState {
 
     const now = new Date().getTime();
 
-    const index = this.pieceId;
-    const rotation = this.pieceRotation;
-
-    const halfWidth = this.grid.width / 2;
-    const center = Math.ceil(display.cols / 2);
-    const left = center - halfWidth * 2;
-    const right = center + halfWidth * 2;
+    const index = this.grid.pieceId;
+    const rotation = this.grid.pieceRotation;
 
     display.hideCursor();
 
@@ -218,10 +277,7 @@ class GameState {
       .printText(`Tetrijs ${this.keys}`, { fg: 16 + Math.floor(now / 250) % (255-16) });
     */
 
-    drawBackground(display, 2, right + 1, 2 + this.grid.height, left);
-    drawFrame(display, 2, right + 1, 2 + this.grid.height, left);
-
-    drawPiece(display, index, this.pieceRotation, left, 3, this.pieceX, this.pieceY);
+    this.grid.draw(display);
 
     /*
     drawPiece(display, index + 1, rotation, 10, 5);

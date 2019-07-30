@@ -19,9 +19,56 @@ function drawPiece(display, index, rotation, left, top, xPos, yPos) {
   }
 }
 
+function drawFrame(display, top, right, bottom, left) {
+  const t = new Date().getTime() / 1000.0;
+  const scale = 1.0;
+  const r = 2;
+  const r2 = r * 2;
+
+  for (let y = Math.ceil(top - r, 0); y <= top; y++) {
+    for (let x = left - r2; x <= right + r2; x++) {
+      const value = plasma(x, y, t, scale) + 0.5;
+
+      display
+        .setCursorPosition(x, y)
+        .putCell(' ', { bg: palette256(...rgbpalette(value)) });
+    }
+  }
+
+  for (let y = top; y < bottom; y++) {
+    for (let x = left - r2; x <= left; x++) {
+      const value = plasma(x, y, t, scale) + 0.5;
+
+      display
+        .setCursorPosition(x, y)
+        .putCell(' ', { bg: palette256(...rgbpalette(value)) });
+    }
+  }
+
+  for (let y = top; y < bottom; y++) {
+    for (let x = right; x <= right + r2; x++) {
+      const value = plasma(x, y, t, scale) + 0.5;
+
+      display
+        .setCursorPosition(x, y)
+        .putCell(' ', { bg: palette256(...rgbpalette(value)) });
+    }
+  }
+
+  for (let y = bottom; y <= bottom + r; y++) {
+    for (let x = left - r2; x <= right + r2; x++) {
+      const value = plasma(x, y, t, scale) + 0.5;
+
+      display
+        .setCursorPosition(x, y)
+        .putCell(' ', { bg: palette256(...rgbpalette(value)) });
+    }
+  }
+}
+
 const BOX_CHARS = ['═', '║', '╔', '╗', '╚', '╝'];
 
-function drawFrame(display, top, right, bottom, left) {
+function drawFrameOld(display, top, right, bottom, left) {
   const attrs = { fg: 15, bg: 0 };
 
   for (let x = left + 1; x < right; x++) {
@@ -59,27 +106,33 @@ function rgbpalette(x, fn = x => x) {
   ));
 }
 
+function plasma(x, y, t, scale = 1.0) {
+  return (
+    Math.sin(x / 16.0 * scale + t) +
+    Math.sin(y / 8.0 * scale + t) +
+    Math.sin((x + y + t) / 16.0 * scale) +
+    Math.sin(Math.sqrt(x * x + y * y) / 8.0 * scale) +
+    4
+  ) / 8.0;
+}
+
 function drawBackground(display, top, right, bottom, left) {
   const w = right - left;
   const h = bottom - top;
 
   const t = new Date().getTime() / 1000.0;
 
-  const scale = 2.2;
+  const scale = 1.0;
 
   for (let y = top + 1; y < bottom; y++) {
     for (let x = left + 1; x < right; x++) {
-      const value = (
-        Math.sin(x / 16.0 * scale + t) +
-        Math.sin(y / 8.0 * scale + t) +
-        Math.sin((x + y + t) / 16.0 * scale) +
-        Math.sin(Math.sqrt(x * x + y * y) / 8.0 * scale) +
-        4
-      ) / 8.0;
+      const value = plasma(x, y, t, scale);
 
       const char = ' ';
 
-      display.setCursorPosition(x, y).putCell(char, { bg: palette256(...rgbpalette(value)) });
+      display
+        .setCursorPosition(x, y)
+        .putCell(char, { bg: palette256(...rgbpalette(value).map(v => v * 0.5)) });
     }
   }
 }
@@ -123,6 +176,7 @@ class Grid {
 
   start() {
     this.setPiece(Math.floor(Math.random() * Tetrominos.length));
+    this.pieceRotation = 0;
   }
 
   stop() {

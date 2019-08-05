@@ -12,7 +12,7 @@ function drawPiece(display, index, rotation, left, top, xPos, yPos) {
   for (let y = 0; y < tetromino.size; y++) {
     for (let x = 0; x < tetromino.size; x++) {
       if (data[y][x]) {
-        display.setCursorPosition(Math.floor(left + 1 + (xPos - tetromino.size / 2 + x) * 2), top + yPos + y);
+        display.setCursorPosition(Math.floor(left + (xPos + x - halfSize) * 2), top + yPos + y);
         display.printText("[]", { bg: tetromino.color, fg: 15 })
       }
     }
@@ -24,10 +24,11 @@ function drawFrame(display, top, right, bottom, left) {
   const scale = 1.0;
   const r = 2;
   const r2 = r * 2;
+  const plasmaOffset = 0;
 
   for (let y = Math.ceil(top - r, 0); y <= top; y++) {
     for (let x = left - r2; x <= right + r2; x++) {
-      const value = plasma(x, y, t, scale) + 0.5;
+      const value = plasma(x, y, t, scale) + plasmaOffset;
 
       display
         .setCursorPosition(x, y)
@@ -37,7 +38,7 @@ function drawFrame(display, top, right, bottom, left) {
 
   for (let y = top; y < bottom; y++) {
     for (let x = left - r2; x <= left; x++) {
-      const value = plasma(x, y, t, scale) + 0.5;
+      const value = plasma(x, y, t, scale) + plasmaOffset;
 
       display
         .setCursorPosition(x, y)
@@ -47,7 +48,7 @@ function drawFrame(display, top, right, bottom, left) {
 
   for (let y = top; y < bottom; y++) {
     for (let x = right; x <= right + r2; x++) {
-      const value = plasma(x, y, t, scale) + 0.5;
+      const value = plasma(x, y, t, scale) + plasmaOffset;
 
       display
         .setCursorPosition(x, y)
@@ -57,7 +58,7 @@ function drawFrame(display, top, right, bottom, left) {
 
   for (let y = bottom; y <= bottom + r; y++) {
     for (let x = left - r2; x <= right + r2; x++) {
-      const value = plasma(x, y, t, scale) + 0.5;
+      const value = plasma(x, y, t, scale) + plasmaOffset;
 
       display
         .setCursorPosition(x, y)
@@ -216,11 +217,14 @@ class Grid {
     const halfWidth = this.width / 2;
     const center = Math.ceil(display.cols / 2);
     const left = center - halfWidth * 2;
-    const right = center + halfWidth * 2;
+    const right = center + halfWidth * 2 + 1;
 
-    drawBackground(display, 2, right + 1, 2 + this.height, left);
-    drawFrame(display, 2, right + 1, 2 + this.height, left);
-    drawPiece(display, this.pieceId, this.pieceRotation, left, 3, this.pieceX, this.pieceY);
+    const top = 2;
+    const bottom = top + this.height;
+
+    drawBackground(display, top, right, bottom, left);
+    drawFrame(display, top, right, bottom, left);
+    drawPiece(display, this.pieceId, this.pieceRotation, left + 1, 3, this.pieceX, this.pieceY);
   }
 
   pieceCollisionOffset(pieceId, rotation, pieceX) {
@@ -233,7 +237,7 @@ class Grid {
           continue;
         }
 
-        const leftDiff = x + pieceX - tetromino.size / 2;
+        const leftDiff = Math.ceil(x + pieceX - tetromino.size / 2);
 
         if (leftDiff < 0) {
           return -leftDiff;
@@ -247,7 +251,7 @@ class Grid {
           continue;
         }
 
-        const right = x + pieceX - tetromino.size / 2 + 1;
+        const right = Math.ceil(x + pieceX - tetromino.size / 2 + 1);
 
         if (right > this.width) {
           return this.width - right;
@@ -262,7 +266,7 @@ class Grid {
 class GameState {
   constructor() {
     this.keys = '';
-    this.grid = new Grid(15, 30);
+    this.grid = new Grid(15, 20);
   }
 
   start() {
@@ -323,7 +327,7 @@ class GameState {
 
     display.setCursorPosition(0, 1).printText(`str: ${JSON.stringify(this.keys)}`)
     display.setCursorPosition(0, 2).printText(`index: ${index % Tetrominos.length} rotation: ${rotation % 4}`);
-    display.setCursorPosition(0, 3).printText(`X: ${this.pieceX} Y: ${this.pieceY}`);
+    display.setCursorPosition(0, 3).printText(`X: ${this.grid.pieceX} Y: ${this.grid.pieceY}`);
 
     /*
     display

@@ -67,9 +67,6 @@ function updateColor(prevFg, prevBg, newFg, newBg) {
   if (!equalFg) { result.push(ANSI.fgColor(newFg)); }
   if (!equalBg) { result.push(ANSI.bgColor(newBg)); }
 
-  // process.stderr.write(JSON.stringify({newFg, newBg}) + "\n");
-
-  //return result.map(s => `\x1b[${s}m`).join('');
   return `\x1b[${result.join(';')}m`;
 };
 
@@ -178,7 +175,7 @@ class Display {
     let prevBg = null;
     let prevFg = null;
 
-    for (const [y, ranges] of this.changedRows2()) {
+    for (const [y, ranges] of this.changedRows()) {
       changed = true;
 
       for (let [start, end] of ranges) {
@@ -203,10 +200,6 @@ class Display {
     }
 
     if (changed) {
-      /*
-      this.prevBuffer = this.buffer;
-      this.buffer = Cell.createBuffer(this.cols, this.rows);
-      */
       const newBuffer = this.prevBuffer;
       this.prevBuffer = this.buffer;
       this.buffer = Cell.resetBuffer(newBuffer);
@@ -218,31 +211,10 @@ class Display {
       }
 
       process.stdout.write(ANSI.cursorVisible(false) + out);
-      // process.stderr.write(JSON.stringify(out) + "\n");
     }
   }
 
   *changedRows() {
-    const definitelyHasChanged = !this.prevBuffer || this.prevBuffer.length !== this.buffer.length;
-
-    for (let y = 0; y < this.rows; y++) {
-      if (definitelyHasChanged) {
-        yield y;
-        continue;
-      }
-
-      const idx = y * this.cols * Cell.SIZE;
-
-      const s1 = this.buffer.slice(idx, idx + this.cols * Cell.SIZE);
-      const s2 = this.prevBuffer.slice(idx, idx + this.cols * Cell.SIZE);
-
-      if (!s1.equals(s2)) {
-        yield y;
-      }
-    }
-  }
-
-  *changedRows2() {
     const definitelyHasChanged = !this.prevBuffer || this.prevBuffer.length !== this.buffer.length;
 
     for (let y = 0; y < this.rows; y++) {
@@ -294,6 +266,15 @@ class Display {
   }
 
   checkBounds(x, y) {
+    return !(
+      x < 0 ||
+      y < 0 ||
+      x >= this.cols ||
+      y >= this.rows
+    );
+  }
+
+  checkBoundsOld(x, y) {
     if (x < 0) {
       throw new Error(`x${x} is < 0`);
     }

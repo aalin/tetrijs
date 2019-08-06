@@ -376,13 +376,20 @@ class Grid {
 
   update() {
     if (this.timer.update()) {
-      if (this.pieceCollidesAt(this.pieceX, this.pieceY + 1)) {
+      if (!this.moveDown()) {
         this.storePiece();
         this.clearRows();
         this.nextPiece();
-      } else {
-        this.pieceY++;
       }
+    }
+  }
+
+  moveDown() {
+    if (this.pieceCollidesAt(this.pieceX, this.pieceY + 1)) {
+      return false;
+    } else {
+      this.pieceY++;
+      return true;
     }
   }
 
@@ -423,11 +430,13 @@ class GameState {
           this.keys = this.keys.substr(0, this.keys.length - 1);
           break;
         case Input.KEYS.LEFT:
+        case Input.KEYS.SHIFT_LEFT:
         case 'j':
         case 'J':
           this.grid.moveLeft();
           break;
         case Input.KEYS.RIGHT:
+        case Input.KEYS.SHIFT_RIGHT:
         case 'l':
         case 'L':
           this.grid.moveRight();
@@ -435,12 +444,18 @@ class GameState {
         case ' ':
           this.grid.hardDrop();
           break;
+        case Input.KEYS.DOWN:
+        case Input.KEYS.SHIFT_DOWN:
+          this.grid.moveDown();
+          break;
         case 'k':
         case 'z':
+        case Input.KEYS.UP:
           this.grid.rotateRight();
           break;
         case 'K':
         case 'Z':
+        case Input.KEYS.SHIFT_UP:
           this.grid.rotateLeft();
           break;
         default:

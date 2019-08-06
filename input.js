@@ -36,6 +36,10 @@ Input.KEYS = {
   DOWN: '\u001b[B',
   RIGHT: '\u001b[C',
   LEFT: '\u001b[D',
+  SHIFT_UP: '\u001b[1;2A',
+  SHIFT_DOWN: '\u001b[1;2B',
+  SHIFT_RIGHT: '\u001b[1;2C',
+  SHIFT_LEFT: '\u001b[1;2D',
 };
 
 module.exports = Input;

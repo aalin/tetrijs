@@ -30,15 +30,25 @@ const PIECE_DATA = [
   ],
 ];
 
+const ROTATIONS = [
+  [ 1.00,  0.00],
+  [ 0.00,  1.00],
+  [-1.00,  0.00],
+  [-0.00, -1.00],
+];
+
 const PIECE_COLORS = 'white blue cyan yellow green magenta red'.split(' ');
 const ANSI_COLORS = 'black red green yellow blue magenta cyan white'.split(' ');
 
 function rotatePiece(piece, rotation) {
+  /*
   const angle = rotation * 90.0;
   const theta = angle / 180.0 * Math.PI;
 
   const cos = Math.cos(theta);
   const sin = Math.sin(theta);
+  */
+  const [cos, sin] = ROTATIONS[rotation % ROTATIONS.length];
 
   const center = (piece.length - 1) / 2;
 
@@ -85,6 +95,32 @@ function shuffle(a) {
   return a;
 }
 
+// https://tetris.fandom.com/wiki/SRS
+const wallKickDataJLSTZ = [
+  [[0, 0],  [-1, 0],  [-1, 1],  [0,-2],  [-1,-2]],
+  [[0, 0],  [ 1, 0],  [ 1,-1],  [0, 2],  [ 1, 2]],
+  [[0, 0],  [ 1, 0],  [ 1, 1],  [0,-2],  [ 1,-2]],
+  [[0, 0],  [-1, 0],  [-1,-1],  [0, 2],  [-1, 2]],
+];
+
+const wallKickDataI = [
+  [[0, 0], [-1, 0], [-1, 1], [0,-2], [-1,-2]],
+  [[0, 0], [ 1, 0], [ 1,-1], [0, 2], [ 1, 2]],
+  [[0, 0], [ 1, 0], [ 1, 1], [0,-2], [ 1,-2]],
+  [[0, 0], [-1, 0], [-1,-1], [0, 2], [-1, 2]],
+];
+
+function getWallKick(data, toRot, fromRot) {
+  const reverse = toRot === (fromRot + 1) % data.length;
+
+  // We need to always flip y because we count upside-down..
+  if (reverse) {
+    return data[(data.length + toRot - 1) % data.length].map(([x, y]) => [-x, y]);
+  } else {
+    return data[toRot % data.length].map(([x, y]) => [x, -y]);
+  }
+}
+
 module.exports = {
   length: Tetrominoes.length,
 
@@ -105,4 +141,15 @@ module.exports = {
 			yield pieces.pop();
 		}
 	},
+
+  wallKickData(index, toRot, fromRot) {
+    switch (index) {
+      case 0:
+        return getWallKick(wallKickDataI, toRot, fromRot);
+      case 3:
+        return [[0, 0]];
+      default:
+        return getWallKick(wallKickDataJLSTZ, toRot, fromRot);
+    }
+  }
 };

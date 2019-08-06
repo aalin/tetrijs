@@ -238,13 +238,16 @@ class Grid {
 
     this.pieceRotation = 0;
     this.pieceId = 0;
+    this.nextPieceId = null;
   }
 
   start() {
     this.clearedLines = 0;
     this.timer.setInterval(SPEEDS[Math.min(SPEEDS.length - 1, Math.floor(this.clearedLines / 10))]);
     this.score = 0;
+
     this.tetrisRandom = Tetrominos.randomizer();
+    this.nextPieceId = null;
     this.nextPiece();
   }
 
@@ -257,6 +260,7 @@ class Grid {
     }
 
     this.pieceX++;
+
     this.timer.reset().update();
   }
 
@@ -266,6 +270,7 @@ class Grid {
     }
 
     this.pieceX--;
+
     this.timer.reset().update();
   }
 
@@ -292,36 +297,36 @@ class Grid {
   rotate(direction) {
     const nextRotation = (4 + this.pieceRotation + direction) % 4;
 
-    if (!this.pieceCollidesAt(this.pieceX, this.pieceY, nextRotation)) {
-      this.pieceRotation = nextRotation;
-      return;
-    }
+    const kicks = Tetrominos.wallKickData(this.pieceId, nextRotation, this.pieceRotation);
 
-    if (!this.pieceCollidesAt(this.pieceX - 1, this.pieceY, nextRotation)) {
-      this.pieceRotation = nextRotation;
-      this.pieceX--;
-      return;
-    }
+    log('Rotate', direction, JSON.stringify(kicks));
 
-    if (!this.pieceCollidesAt(this.pieceX + 1, this.pieceY, nextRotation)) {
-      this.pieceRotation = nextRotation;
-      this.pieceX++;
-      return;
+    for (let [x, y] of kicks) {
+      if (!this.pieceCollidesAt(this.pieceX + x, this.pieceY + y, nextRotation)) {
+        this.pieceRotation = nextRotation;
+        this.pieceX += x;
+        this.pieceY += y;
+        return;
+      }
     }
   }
 
   setPiece(id) {
     this.pieceId = id;
-    this.pieceY = 0;
+    this.pieceY = 2;
+    this.pieceX = Math.floor(this.width / 2);
+
+    if (this.pieceCollidesAt(this.pieceX, this.pieceY, this.pieceRotation)) {
+      throw new Error('We lost!!')
+    }
+
     this.timer.reset().update();
   }
 
   nextPiece() {
-    this.setPiece(this.tetrisRandom.next().value);
+    this.setPiece(this.nextPieceId === null ? this.tetrisRandom.next().value : this.nextPieceId);
     this.nextPieceId = this.tetrisRandom.next().value;
     this.pieceRotation = 0;
-    this.pieceX = Math.floor(this.width / 2);
-    this.timer.reset().update();
   }
 
   clearLines() {
@@ -377,8 +382,8 @@ class Grid {
           continue;
         }
 
-        const cx = Math.floor(x + tx - halfSize);
-        const cy = Math.floor(y + ty - halfSize);
+        const cx = x + tx - halfSize;
+        const cy = y + ty - halfSize;
 
         if (cx < 0) {
           return true;
@@ -415,8 +420,8 @@ class Grid {
 
     for (let ty = 0; ty < tetromino.size; ty++) {
       for (let tx = 0; tx < tetromino.size; tx++) {
-        const cx = Math.floor(x + tx - halfSize);
-        const cy = Math.floor(y + ty - halfSize);
+        const cx = x + tx - halfSize;
+        const cy = y + ty - halfSize;
 
         if (data[ty][tx]) {
           this.setCell(cx, cy, tetromino.color);
@@ -444,11 +449,16 @@ class Grid {
     }
   }
 
-  moveDown() {
+  moveDown(resetTimer = false) {
     if (this.pieceCollidesAt(this.pieceX, this.pieceY + 1)) {
       return false;
     } else {
       this.pieceY++;
+
+      if (resetTimer) {
+        this.timer.reset().update();
+      }
+
       return true;
     }
   }
@@ -475,7 +485,7 @@ class Grid {
         }
       }
     }
-    log(JSON.stringify({shadowedColumns}))
+    // log(JSON.stringify({shadowedColumns}))
 
     drawBackground(display, top, right, bottom, left);
     drawContent(display, this.data, shadowedColumns, this.width, left + 1, 3);
@@ -537,7 +547,7 @@ class GameState {
           break;
         case Input.KEYS.DOWN:
         case Input.KEYS.SHIFT_DOWN:
-          this.grid.moveDown();
+          this.grid.moveDown(true);
           break;
         case 'k':
         case 'z':

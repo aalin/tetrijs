@@ -33,17 +33,30 @@ function drawPiece(display, index, rotation, left, top, xPos, yPos) {
   }
 }
 
-function drawContent(display, data, width, left, top) {
+function drawContent(display, data, shadowedColumns, width, left, top) {
   const height = data.length / width;
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
+  const text = '[]';
+  const shadowedText = '⟦⟧';
+
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) {
       const color = data[y * width + x];
 
       if (color) {
         display.setCursorPosition(left + x * 2, top + y);
-        display.printText("[]", { bg: color, fg: 15 });
+
+        if (shadowedColumns[0] === x) {
+          display.printText(shadowedText, { bg: color, fg: 7 });
+          shadowedColumns.shift();
+        } else {
+          display.printText(text, { bg: color, fg: 15 });
+        }
       }
+    }
+
+    if (shadowedColumns[0] === x) {
+      shadowedColumns.shift();
     }
   }
 }
@@ -228,7 +241,7 @@ class Grid {
   }
 
   start() {
-    this.clearedLines = 120;
+    this.clearedLines = 0;
     this.timer.setInterval(SPEEDS[Math.min(SPEEDS.length - 1, Math.floor(this.clearedLines / 10))]);
     this.score = 0;
     this.tetrisRandom = Tetrominos.randomizer();
@@ -449,8 +462,23 @@ class Grid {
     const top = 2;
     const bottom = top + this.height + 1;
 
+    const shadowedColumns = [];
+    const tetromino = Tetrominos.get(this.pieceId);
+    const data = tetromino.getRotation(this.pieceRotation);
+
+    for (let x = 0; x < tetromino.size; x++) {
+      for (let y = 0; y < tetromino.size; y++) {
+        if (data[y][x]) {
+          const idx = Math.floor(this.pieceX + x - tetromino.halfSize);
+          shadowedColumns.push(idx);
+          break;
+        }
+      }
+    }
+    log(JSON.stringify({shadowedColumns}))
+
     drawBackground(display, top, right, bottom, left);
-    drawContent(display, this.data, this.width, left + 1, 3);
+    drawContent(display, this.data, shadowedColumns, this.width, left + 1, 3);
     drawPiece(display, this.pieceId, this.pieceRotation, left + 1, 3, this.pieceX, this.pieceY);
     drawFrame(display, top, right, bottom, left);
   }

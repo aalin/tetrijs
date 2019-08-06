@@ -8,6 +8,12 @@ function log(...args) {
 
 const palette256 = require('./display/palette').palette256;
 
+const SCORES = [40, 100, 300, 1200];
+
+function calculateScore(level, lines) {
+  return SCORES[Math.min(lines, SCORES.length - 1)] * (level + 1);
+}
+
 function drawPiece(display, index, rotation, left, top, xPos, yPos) {
   const tetromino = Tetrominos.get(index);
   const data = tetromino.getRotation(rotation);
@@ -161,9 +167,15 @@ function drawBackground(display, top, right, bottom, left) {
   }
 }
 
+const SPEEDS = [800, 720, 630, 550, 470, 380, 300, 220, 130, 100, 80, 80, 80, 70, 70, 70, 50];
+
 class Timer {
   constructor(interval = 1000) {
     this._lastUpdate = null;
+    this._interval = interval;
+  }
+
+  setInterval(interval) {
     this._interval = interval;
   }
 
@@ -188,9 +200,23 @@ class Grid {
   constructor(width, height) {
     this.width = width;
     this.height = height;
-    this.data = Array.from({ length: width * height }, () => 0);
+
+    this.data = Array.from({ length: width * height }, (_, i) => {
+      const y = Math.floor(i / width);
+      const x = i % width;
+
+      if (y > height - 5) {
+        if (x !== 2) {
+          return 1;
+        }
+      }
+
+      return 0;
+    });
 
     this.tetrisRandom = null;
+    this.score = 0;
+    this.clearedLines = 0;
 
     this.timer = new Timer(800);
 
@@ -202,6 +228,9 @@ class Grid {
   }
 
   start() {
+    this.clearedLines = 120;
+    this.timer.setInterval(SPEEDS[Math.min(SPEEDS.length - 1, Math.floor(this.clearedLines / 10))]);
+    this.score = 0;
     this.tetrisRandom = Tetrominos.randomizer();
     this.nextPiece();
   }
@@ -282,17 +311,35 @@ class Grid {
     this.timer.reset().update();
   }
 
-  clearRows() {
-    const idx = (this.height - 1) * this.width;
+  clearLines() {
+    let clearedLines = 0;
 
-    while (true) {
-      const allFull = this.data.slice(idx).every(i => i !== 0);
+    for (let y = 0; y < this.height; y++) {
+      const idx = y * this.width;
+      const allFull = this.data.slice(idx, idx + this.width).every(i => i !== 0);
 
       if (!allFull) {
-        break;
+        continue;
       }
 
-      this.data = Array.from({ length: this.width }, () => 0).concat(this.data.slice(0, idx));
+      const emptyArray = Array.from({ length: this.width }, () => 0);
+
+      this.data = [].concat(
+        emptyArray,
+        this.data.slice(0, idx),
+        this.data.slice(idx + this.width),
+      );
+
+      y = 0;
+
+      clearedLines++;
+    }
+
+    if (clearedLines > 0) {
+      const level = Math.floor(this.clearedLines / 10);
+      this.score += calculateScore(level, clearedLines);
+      this.clearedLines += clearedLines;
+      this.timer.setInterval(SPEEDS[Math.min(SPEEDS.length - 1, Math.floor(this.clearedLines / 10))]);
     }
   }
 
@@ -378,7 +425,7 @@ class Grid {
     if (this.timer.update()) {
       if (!this.moveDown()) {
         this.storePiece();
-        this.clearRows();
+        this.clearLines();
         this.nextPiece();
       }
     }
@@ -423,7 +470,23 @@ class GameState {
     this.grid.stop();
   }
 
+  withinBounds(engine) {
+    if (engine.display.cols <= this.grid.width * 2 + 12) {
+      return false;
+    }
+
+    if (engine.display.rows <= this.grid.height + 5) {
+      return false;
+    }
+
+    return true;
+  }
+
   update(engine, keys) {
+    if (!this.withinBounds(engine)) {
+      return;
+    }
+
     for (let key of keys) {
       switch (key) {
         case Input.KEYS.BACKSPACE:
@@ -472,6 +535,11 @@ class GameState {
   }
 
   draw(engine, display) {
+    if (!this.withinBounds(engine)) {
+      display.setCursorPosition(0, 0).printText(`Please resize your screen`);
+      return;
+    }
+
     const lines = this.keys.split('\r');
 
     const now = new Date().getTime();
@@ -481,9 +549,14 @@ class GameState {
 
     display.hideCursor();
 
+    /*
     display.setCursorPosition(0, 1).printText(`str: ${JSON.stringify(this.keys)}`)
     display.setCursorPosition(0, 2).printText(`index: ${index % Tetrominos.length} rotation: ${rotation % 4}`);
     display.setCursorPosition(0, 3).printText(`X: ${this.grid.pieceX} Y: ${this.grid.pieceY}`);
+    */
+    display.setCursorPosition(0, 0).printText(`Tetrijs`);
+    display.setCursorPosition(0, 2).printText(`Score: ${this.grid.score}`);
+    display.setCursorPosition(0, 3).printText(`Level: ${Math.floor(this.grid.clearedLines / 10)} (${(this.grid.clearedLines % 10) * 10}%)`);
 
     /*
     display

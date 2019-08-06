@@ -8,7 +8,7 @@ class Input extends EventEmitter {
   }
 
   start() {
-    console.log('starting input');
+    console.log('Starting input');
     this.stdin.setRawMode(true);
     this.stdin.resume();
     this.stdin.setEncoding('utf8');
@@ -16,7 +16,7 @@ class Input extends EventEmitter {
   }
 
   stop() {
-    console.log('stopping input');
+    console.log('Stopping input');
     this.removeAllListeners();
     this.stdin.removeListener('data', this._onData);
     this.stdin.removeAllListeners('data');

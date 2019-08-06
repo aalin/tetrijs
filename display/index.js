@@ -105,7 +105,7 @@ class Display {
       ANSI.cursorVisible(true) +
       ANSI.disableAlternateScreenBuffer()
     );
-    console.log('stopping display');
+    console.log('Stopping display');
   }
 
   requestCursorPosition(cb) {
@@ -309,7 +309,6 @@ class Display {
       return;
     }
 
-    console.log('handleResize');
     this.cols = process.stdout.columns;
     this.rows = process.stdout.rows;
     this.buffer = Cell.createBuffer(this.cols, this.rows);

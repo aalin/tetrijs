@@ -168,7 +168,7 @@ class Display {
     if (this._wasJustResized) {
       changed = true;
       this._wasJustResized = false;
-      out += ANSI.eraseInDisplay(2);
+      out += ANSI.resetColor() + ANSI.eraseInDisplay(2);
       this.setCursorPosition(0, 0);
     }
 

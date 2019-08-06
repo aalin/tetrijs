@@ -2,6 +2,10 @@ const Input = require('./input');
 const Engine = require('./engine.js');
 const Tetrominos = require('./tetromino');
 
+function log(...args) {
+  process.stderr.write(args.map(String).join(' ') + '\n');
+}
+
 const palette256 = require('./display/palette').palette256;
 
 function drawPiece(display, index, rotation, left, top, xPos, yPos) {
@@ -12,8 +16,27 @@ function drawPiece(display, index, rotation, left, top, xPos, yPos) {
   for (let y = 0; y < tetromino.size; y++) {
     for (let x = 0; x < tetromino.size; x++) {
       if (data[y][x]) {
-        display.setCursorPosition(Math.floor(left + (xPos + x - halfSize) * 2), top + yPos + y);
+        display.setCursorPosition(
+          Math.floor(left + (xPos + x - halfSize) * 2),
+          Math.floor(top + yPos + y - halfSize)
+        );
+
         display.printText("[]", { bg: tetromino.color, fg: 15 })
+      }
+    }
+  }
+}
+
+function drawContent(display, data, width, left, top) {
+  const height = data.length / width;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const color = data[y * width + x];
+
+      if (color) {
+        display.setCursorPosition(left + x * 2, top + y);
+        display.printText("[]", { bg: color, fg: 15 });
       }
     }
   }
@@ -146,6 +169,7 @@ class Timer {
 
   reset() {
     this._lastUpdate = null;
+    return this;
   }
 
   update() {
@@ -166,7 +190,9 @@ class Grid {
     this.height = height;
     this.data = Array.from({ length: width * height }, () => 0);
 
-    this.timer = new Timer(1000);
+    this.tetrisRandom = null;
+
+    this.timer = new Timer(800);
 
     this.pieceX = Math.floor(width / 2);
     this.pieceY = 0;
@@ -176,40 +202,187 @@ class Grid {
   }
 
   start() {
-    this.setPiece(Math.floor(Math.random() * Tetrominos.length));
-    this.pieceRotation = 0;
+    this.tetrisRandom = Tetrominos.randomizer();
+    this.nextPiece();
   }
 
   stop() {
   }
 
   moveRight() {
+    if (this.pieceCollidesAt(this.pieceX + 1, this.pieceY)) {
+      return;
+    }
+
     this.pieceX++;
+    this.timer.reset().update();
   }
 
   moveLeft() {
+    if (this.pieceCollidesAt(this.pieceX - 1, this.pieceY)) {
+      return;
+    }
+
     this.pieceX--;
+    this.timer.reset().update();
+  }
+
+  hardDrop() {
+    while (true) {
+      if (this.pieceCollidesAt(this.pieceX, this.pieceY + 1)) {
+        break;
+      }
+
+      this.pieceY++;
+    }
+
+    this.timer.reset().update();
   }
 
   rotateRight() {
-    this.pieceRotation = (this.pieceRotation + 1) % 4;
+    this.rotate(1);
   }
 
   rotateLeft() {
-    this.pieceRotation = (4 + this.pieceRotation - 1) % 4;
+    this.rotate(-1);
+  }
+
+  rotate(direction) {
+    const nextRotation = (4 + this.pieceRotation + direction) % 4;
+
+    if (!this.pieceCollidesAt(this.pieceX, this.pieceY, nextRotation)) {
+      this.pieceRotation = nextRotation;
+      return;
+    }
+
+    if (!this.pieceCollidesAt(this.pieceX - 1, this.pieceY, nextRotation)) {
+      this.pieceRotation = nextRotation;
+      this.pieceX--;
+      return;
+    }
+
+    if (!this.pieceCollidesAt(this.pieceX + 1, this.pieceY, nextRotation)) {
+      this.pieceRotation = nextRotation;
+      this.pieceX++;
+      return;
+    }
   }
 
   setPiece(id) {
     this.pieceId = id;
     this.pieceY = 0;
-    this.timer.reset();
+    this.timer.reset().update();
+  }
+
+  nextPiece() {
+    this.setPiece(this.tetrisRandom.next().value);
+    this.nextPieceId = this.tetrisRandom.next().value;
+    this.pieceRotation = 0;
+    this.pieceX = Math.floor(this.width / 2);
+    this.timer.reset().update();
+  }
+
+  clearRows() {
+    const idx = (this.height - 1) * this.width;
+
+    while (true) {
+      const allFull = this.data.slice(idx).every(i => i !== 0);
+
+      if (!allFull) {
+        break;
+      }
+
+      this.data = Array.from({ length: this.width }, () => 0).concat(this.data.slice(0, idx));
+    }
+  }
+
+  setCell(x, y, value) {
+    const index = y * this.width + x;
+    this.data[index] = value;
+  }
+
+  getCell(x, y) {
+    const index = y * this.width + x;
+    return this.data[index];
+  }
+
+  pieceCollidesAt(x, y, rotation = this.pieceRotation) {
+    const tetromino = Tetrominos.get(this.pieceId);
+    const data = tetromino.getRotation(rotation % 4);
+    const halfSize = tetromino.halfSize;
+
+    for (let ty = 0; ty < tetromino.size; ty++) {
+      for (let tx = 0; tx < tetromino.size; tx++) {
+        if (!data[ty][tx]) {
+          continue;
+        }
+
+        const cx = Math.floor(x + tx - halfSize);
+        const cy = Math.floor(y + ty - halfSize);
+
+        if (cx < 0) {
+          return true;
+        }
+
+        if (cx >= this.width) {
+          return true;
+        }
+
+        if (cy >= this.height) {
+          return true;
+        }
+
+        if (cy >= 0) {
+          const cell = this.getCell(cx, cy);
+
+          if (cell !== 0) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  storePiece() {
+    const tetromino = Tetrominos.get(this.pieceId);
+    const data = tetromino.getRotation(this.pieceRotation);
+    const halfSize = tetromino.halfSize;
+
+    const x = this.pieceX;
+    const y = this.pieceY;
+
+    for (let ty = 0; ty < tetromino.size; ty++) {
+      for (let tx = 0; tx < tetromino.size; tx++) {
+        const cx = Math.floor(x + tx - halfSize);
+        const cy = Math.floor(y + ty - halfSize);
+
+        if (data[ty][tx]) {
+          this.setCell(cx, cy, tetromino.color);
+        }
+      }
+    }
+
+    for (let ty = 0; ty < this.height; ty++) {
+      const idx = ty * this.width;
+      const chars = this.data.slice(idx, idx + this.width);
+
+      log(chars.map(chr => {
+        return chr ? 'X' : '.';
+      }).join(''));
+    }
   }
 
   update() {
-    this.pieceX += this.pieceCollisionOffset(this.pieceId, this.pieceRotation, this.pieceX);
-
     if (this.timer.update()) {
-      this.pieceY++;
+      if (this.pieceCollidesAt(this.pieceX, this.pieceY + 1)) {
+        this.storePiece();
+        this.clearRows();
+        this.nextPiece();
+      } else {
+        this.pieceY++;
+      }
     }
   }
 
@@ -220,53 +393,19 @@ class Grid {
     const right = center + halfWidth * 2 + 1;
 
     const top = 2;
-    const bottom = top + this.height;
+    const bottom = top + this.height + 1;
 
     drawBackground(display, top, right, bottom, left);
-    drawFrame(display, top, right, bottom, left);
+    drawContent(display, this.data, this.width, left + 1, 3);
     drawPiece(display, this.pieceId, this.pieceRotation, left + 1, 3, this.pieceX, this.pieceY);
-  }
-
-  pieceCollisionOffset(pieceId, rotation, pieceX) {
-    const tetromino = Tetrominos.get(pieceId);
-    const data = tetromino.getRotation(rotation);
-
-    for (let x = 0; x < data.length; x++) {
-      for (let y = 0; y < data.length; y++) {
-        if (!data[y][x]) {
-          continue;
-        }
-
-        const leftDiff = Math.ceil(x + pieceX - tetromino.size / 2);
-
-        if (leftDiff < 0) {
-          return -leftDiff;
-        }
-      }
-    }
-
-    for (let x = data.length - 1; x >= 0; x--) {
-      for (let y = 0; y < data.length; y++) {
-        if (!data[y][x]) {
-          continue;
-        }
-
-        const right = Math.ceil(x + pieceX - tetromino.size / 2 + 1);
-
-        if (right > this.width) {
-          return this.width - right;
-        }
-      }
-    }
-
-    return 0;
+    drawFrame(display, top, right, bottom, left);
   }
 }
 
 class GameState {
   constructor() {
     this.keys = '';
-    this.grid = new Grid(15, 20);
+    this.grid = new Grid(11, 20);
   }
 
   start() {
@@ -294,6 +433,8 @@ class GameState {
           this.grid.moveRight();
           break;
         case ' ':
+          this.grid.hardDrop();
+          break;
         case 'k':
         case 'z':
           this.grid.rotateRight();

@@ -72,10 +72,37 @@ const Tetrominoes = Array.from(PIECE_DATA, (data, i) => (
   new Tetromino(data, ANSI_COLORS.indexOf(PIECE_COLORS[i]))
 ));
 
+// Fisher-Yates shuffle algorithm
+// https://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array/6274381#6274381
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const x = a[i];
+    a[i] = a[j];
+    a[j] = x;
+  }
+
+  return a;
+}
+
 module.exports = {
   length: Tetrominoes.length,
 
   get(index) {
     return Tetrominoes[index % Tetrominoes.length];
-  }
+  },
+
+	*randomizer() {
+		const indexes = Array.from(Tetrominoes, (_, i) => i);
+
+		let pieces = [];
+
+		while (true) {
+			if (pieces.length === 0) {
+				pieces = shuffle(Array.from(indexes));
+			}
+
+			yield pieces.pop();
+		}
+	},
 };

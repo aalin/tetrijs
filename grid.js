@@ -28,6 +28,8 @@ class Grid {
       return 0;
     });
 
+    this.gameOver = true;
+
     this.tetrisRandom = null;
     this.score = 0;
     this.clearedLines = 0;
@@ -47,6 +49,7 @@ class Grid {
   }
 
   start() {
+    this.gameOver = false;
     this.clearedLines = 0;
 
     this.timer.setInterval(SPEEDS[Math.min(SPEEDS.length - 1, this.level)]);
@@ -124,7 +127,11 @@ class Grid {
     this.pieceX = Math.floor(this.width / 2);
 
     if (this.pieceCollidesAt(this.pieceX, this.pieceY, this.pieceRotation)) {
-      throw new Error('We lost!!')
+      this.gameOver = true;
+
+      if (this.parent) {
+        this.parent.gameOver(this);
+      }
     }
 
     this.timer.reset().update();
@@ -247,6 +254,10 @@ class Grid {
   }
 
   update() {
+    if (this.gameOver) {
+      return;
+    }
+
     if (this.timer.update()) {
       if (!this.moveDown()) {
         this.storePiece();
@@ -271,6 +282,11 @@ class Grid {
   }
 
   draw(display) {
+    if (this.gameOver) {
+      graphics.drawGameOverScreen(display);
+      return;
+    }
+
     const halfWidth = this.width / 2;
     const center = Math.ceil(display.cols / 2);
     const left = center - halfWidth * 2;

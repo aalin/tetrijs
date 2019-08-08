@@ -12,7 +12,7 @@ class GameState {
   }
 
   start() {
-    this.grid.start();
+    //this.grid.start();
   }
 
   stop() {

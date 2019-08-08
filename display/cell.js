@@ -33,7 +33,13 @@ class Cell {
   }
 
   static read(buffer, index) {
-    return parseCell(readCell(buffer, index));
+    try {
+      return parseCell(readCell(buffer, index));
+    } catch (e) {
+      console.error('Error in readCell at ', index * CELL_SIZE, ' buffer length:', buffer.length);
+      console.error('data', readCell(buffer, index));
+      throw e;
+    }
   }
 
   static readRaw(buffer, index) {

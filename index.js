@@ -7,12 +7,11 @@ const Grid = require('./grid');
 
 class GameState {
   constructor() {
-    this.keys = '';
     this.grid = new Grid(11, 20);
   }
 
   start() {
-    //this.grid.start();
+    this.grid.start();
   }
 
   stop() {
@@ -38,9 +37,6 @@ class GameState {
 
     for (let key of keys) {
       switch (key) {
-        case Input.KEYS.BACKSPACE:
-          this.keys = this.keys.substr(0, this.keys.length - 1);
-          break;
         case Input.KEYS.LEFT:
         case Input.KEYS.SHIFT_LEFT:
         case 'j':
@@ -75,7 +71,6 @@ class GameState {
             this.grid.setPiece(Number(key));
           }
 
-          this.keys += key;
           break;
       }
     }
@@ -89,40 +84,13 @@ class GameState {
       return;
     }
 
-    const lines = this.keys.split('\r');
-
-    const now = new Date().getTime();
-
-    const index = this.grid.pieceId;
-    const rotation = this.grid.pieceRotation;
-
     display.hideCursor();
 
-    /*
-    display.setCursorPosition(0, 1).printText(`str: ${JSON.stringify(this.keys)}`)
-    display.setCursorPosition(0, 2).printText(`index: ${index % Tetrominos.length} rotation: ${rotation % 4}`);
-    display.setCursorPosition(0, 3).printText(`X: ${this.grid.pieceX} Y: ${this.grid.pieceY}`);
-    */
     display.setCursorPosition(0, 0).printText(`Tetrijs`);
     display.setCursorPosition(0, 2).printText(`Score: ${this.grid.score}`);
     display.setCursorPosition(0, 3).printText(`Level: ${this.grid.level} (${(this.grid.clearedLines % 10) * 10}%)`);
 
-    /*
-    display
-      .setCursorPosition(1, 1)
-      .printText(`Tetrijs ${this.keys}`, { fg: 16 + Math.floor(now / 250) % (255-16) });
-    */
-
     this.grid.draw(display);
-
-    /*
-    drawPiece(display, index + 1, rotation, 10, 5);
-    drawPiece(display, index + 2, rotation, 20, 5);
-    drawPiece(display, index + 3, rotation, 0, 15);
-    drawPiece(display, index + 4, rotation, 10, 15);
-    drawPiece(display, index + 5, rotation, 20, 15);
-    */
-    //display.setCursorPosition(0, 0)
   }
 }
 

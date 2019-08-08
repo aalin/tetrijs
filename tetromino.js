@@ -113,11 +113,10 @@ const wallKickDataI = [
 function getWallKick(data, toRot, fromRot) {
   const reverse = toRot === (fromRot + 1) % data.length;
 
-  // We need to always flip y because we count upside-down..
   if (reverse) {
-    return data[(data.length + toRot - 1) % data.length].map(([x, y]) => [-x, y]);
+    return data[(data.length + toRot - 1) % data.length].map(([x, y]) => [-x, -y]);
   } else {
-    return data[toRot % data.length].map(([x, y]) => [x, -y]);
+    return data[toRot % data.length].map(([x, y]) => [x, y]);
   }
 }
 

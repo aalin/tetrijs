@@ -30,7 +30,7 @@ class Grid {
     this.width = width;
     this.height = height;
 
-    this.data = createGrid(width, height);
+    this.data = createGrid(this.width, this.height);
 
     this.gameOver = true;
 
@@ -117,10 +117,10 @@ class Grid {
     log('Rotate', direction, JSON.stringify(kicks));
 
     for (let [x, y] of kicks) {
-      if (!this.pieceCollidesAt(this.pieceX + x, this.pieceY + y, nextRotation)) {
+      if (!this.pieceCollidesAt(this.pieceX + x, this.pieceY - y, nextRotation)) {
         this.pieceRotation = nextRotation;
         this.pieceX += x;
-        this.pieceY += y;
+        this.pieceY -= y;
         return;
       }
     }
@@ -143,7 +143,6 @@ class Grid {
   }
 
   nextPiece() {
-    log('Next piece');
     this.setPiece(this.nextPieceId === null ? this.tetrisRandom.next().value : this.nextPieceId);
     this.nextPieceId = this.tetrisRandom.next().value;
     this.pieceRotation = 0;

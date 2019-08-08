@@ -202,59 +202,68 @@ function drawGameOverScreen(display) {
         .setCursorPosition(x, y)
         .putCell(char, { bg: palette256(...rgbpalette(value).map(v => v * alpha)) });
     }
-	}
+  }
 
-	for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 16; i++) {
     const r = (Math.sin(i / 4.0 * Math.PI) + 1.0) / 2.0;
-		const rotation = (Math.floor(t / 2.0 + r) % 4);
+    const rotation = (Math.floor(t / 2.0 + r) % 4);
 
-		const yPos = Math.floor(
+    const yPos = Math.floor(
      Math.floor(t) + ((Math.sin(i / 4.0 * Math.PI) + 1.0) / 2.0) * display.rows,
-		) % display.rows;
+    ) % display.rows;
 
-		const offset = Math.floor(display.cols * 0.2);
-		const xPos = Math.floor(((i / 16) * (display.cols - offset / 2) + offset / 2) / 2);
+    const offset = Math.floor(display.cols * 0.2);
+    const xPos = Math.floor(((i / 16) * (display.cols - offset / 2) + offset / 2) / 2);
 
-		const char = ' ';
+    const char = ' ';
 
-		for (let [x, y] of eachPiecePosition(i, rotation, xPos, yPos)) {
-			if (y < 0) {
-				continue;
-			}
+    for (let [x, y] of eachPiecePosition(i, rotation, xPos, yPos)) {
+      if (y < 0) {
+        continue;
+      }
 
-			y %= display.rows;
+      y %= display.rows;
 
-			const value = plasma(x * 2, y, t / 4.0, scale);
-			const alpha = 0.3;
-			const bg =  palette256(...rgbpalette(value).map(v => v * alpha));
+      const value = plasma(x * 2, y, t / 4.0, scale);
+      const alpha = 0.3;
+      const bg =  palette256(...rgbpalette(value).map(v => v * alpha));
 
-			try {
-				display
-					.setCursorPosition(x * 2, y)
-					.printText('  ', { bg })
-			} catch (e) {
-				log(e.message);
-				log(JSON.stringify(e.stack));
-			}
-		}
+      try {
+        display
+          .setCursorPosition(x * 2, y)
+          .printText('  ', { bg })
+      } catch (e) {
+        log(e.message);
+        log(JSON.stringify(e.stack));
+      }
+    }
 
-		const lines = GAME_OVER_TEXT.split('\n');
+    const lines = GAME_OVER_TEXT.split('\n');
 
-		while (lines[0].trim() === '') {
-			lines.shift();
-		}
+    while (lines[0].trim() === '') {
+      lines.shift();
+    }
 
-		const textWidth = lines.reduce((acc, obj) => Math.max(acc, obj.length), 0);
-		const textLeft = Math.floor(display.cols / 2 - textWidth / 2);
-		const textTop = Math.floor(display.rows / 2 - lines.length / 2);
+    const textWidth = lines.reduce((acc, obj) => Math.max(acc, obj.length), 0);
+    const textLeft = Math.floor(display.cols / 2 - textWidth / 2);
+    const textTop = Math.floor(display.rows / 2 - lines.length / 2);
 
-		for (let y = 0; y < lines.length; y++) {
-			const fg = 15;
+    for (let y = 0; y < lines.length; y++) {
+      const fg = 15;
 
-			display
-				.setCursorPosition(textLeft, textTop + y)
-				.printText(lines[y], { fg })
-		}
+      display
+        .setCursorPosition(textLeft, textTop + y)
+        .printText(lines[y], { fg })
+    }
+
+    const text = 'Press space to start';
+
+    display
+      .setCursorPosition(
+        Math.floor(display.cols / 2 - text.length / 2),
+        textTop + lines.length + 2
+      )
+      .printText(text, { fg: 15 })
   }
 }
 

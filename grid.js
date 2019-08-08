@@ -10,23 +10,27 @@ function calculateScore(level, lineCount) {
   return SCORES[Math.min(lineCount, SCORES.length - 1)] * (level + 1);
 }
 
+function createGrid(width, height) {
+  return Array.from({ length: width * height }, (_, i) => {
+    const y = Math.floor(i / width);
+    const x = i % width;
+
+    if (y > height - 5) {
+      if (x !== 2) {
+        return 1;
+      }
+    }
+
+    return 0;
+  });
+}
+
 class Grid {
   constructor(width, height) {
     this.width = width;
     this.height = height;
 
-    this.data = Array.from({ length: width * height }, (_, i) => {
-      const y = Math.floor(i / width);
-      const x = i % width;
-
-      if (y > height - 5) {
-        if (x !== 2) {
-          return 1;
-        }
-      }
-
-      return 0;
-    });
+    this.data = createGrid(width, height);
 
     this.gameOver = true;
 
@@ -49,6 +53,7 @@ class Grid {
   }
 
   start() {
+    this.data = createGrid(this.width, this.height);
     this.gameOver = false;
     this.clearedLines = 0;
 
@@ -123,7 +128,7 @@ class Grid {
 
   setPiece(id) {
     this.pieceId = id;
-    this.pieceY = 2;
+    this.pieceY = 0;
     this.pieceX = Math.floor(this.width / 2);
 
     if (this.pieceCollidesAt(this.pieceX, this.pieceY, this.pieceRotation)) {
@@ -138,6 +143,7 @@ class Grid {
   }
 
   nextPiece() {
+    log('Next piece');
     this.setPiece(this.nextPieceId === null ? this.tetrisRandom.next().value : this.nextPieceId);
     this.nextPieceId = this.tetrisRandom.next().value;
     this.pieceRotation = 0;

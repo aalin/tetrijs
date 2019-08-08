@@ -11,7 +11,7 @@ class GameState {
   }
 
   start() {
-    this.grid.start();
+    //this.grid.start();
   }
 
   stop() {
@@ -50,7 +50,12 @@ class GameState {
           this.grid.moveRight();
           break;
         case ' ':
-          this.grid.hardDrop();
+          log('SPACE PRESSED', this.grid.gameOver);
+          if (this.grid.gameOver) {
+            this.grid.start();
+          } else {
+            this.grid.hardDrop();
+          }
           break;
         case Input.KEYS.DOWN:
         case Input.KEYS.SHIFT_DOWN:

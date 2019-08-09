@@ -301,7 +301,7 @@ class Grid {
 
 		const height = this.height + 6;
 
-    const top = Math.floor(display.rows / 2 - height / 2);
+    const top = Math.floor(display.rows / 2 - height / 2) + 2;
     const bottom = top + this.height + 1;
 
     const shadowedColumns = [];
@@ -318,10 +318,13 @@ class Grid {
       }
     }
 
-    graphics.drawBackground(display, top, right, bottom, left);
+    const tdiv = 8000;
+    const pscale = 1.0;
+
+    graphics.drawBackground(display, top, right, bottom, left, tdiv, pscale);
     graphics.drawContent(display, this.data, shadowedColumns, this.width, left + 1, top + 1);
     graphics.drawPiece(display, this.pieceId, this.pieceRotation, left + 1, top + 1, this.pieceX, this.pieceY);
-    graphics.drawFrame(display, top, right, bottom, left);
+    graphics.drawFrame(display, top, right, bottom, left, tdiv, pscale);
   }
 }
 

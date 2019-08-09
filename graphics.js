@@ -65,9 +65,8 @@ function drawContent(display, data, shadowedColumns, width, left, top) {
   }
 }
 
-function drawFrame(display, top, right, bottom, left) {
-  const t = new Date().getTime() / 1000.0;
-  const scale = 1.0;
+function drawFrame(display, top, right, bottom, left, tdiv, scale = 1.0) {
+  const t = new Date().getTime() / tdiv;
   const r = 2;
   const r2 = r * 2;
   const plasmaOffset = 0;
@@ -163,13 +162,11 @@ function plasma(x, y, t, scale = 1.0) {
   ) / 8.0;
 }
 
-function drawBackground(display, top, right, bottom, left) {
+function drawBackground(display, top, right, bottom, left, tdiv, scale = 1.0) {
   const w = right - left;
   const h = bottom - top;
 
-  const t = new Date().getTime() / 1000.0;
-
-  const scale = 1.0;
+  const t = new Date().getTime() / tdiv;
 
   for (let y = top + 1; y < bottom; y++) {
     for (let x = left + 1; x < right; x++) {
@@ -215,7 +212,7 @@ C8888 eeee "8" 888 888 888 88b d88 88b   C8888 8888D  Y8b Y8P  d88 88b 888 "
 
 function drawGameOverScreen(display) {
   const t = new Date().getTime() / 1000.0;
-  const scale = 0.2;
+  const scale = 0.5;
 
   const indexes = [];
 
@@ -266,8 +263,9 @@ function drawGameOverScreen(display) {
       }
     }
 
-		printHello(display, TITLE_TEXT, 0.25);
-		printHello(display, GAME_OVER_TEXT, 0.5);
+    const y = Math.floor(display.rows / 2 - GAME_OVER_TEXT.length / 2);
+		printHello(display, GAME_OVER_TEXT, y);
+		printHello(display, TITLE_TEXT, y - TITLE_TEXT.length);
 
     /*
     const f = (x = 0.0) => ((t * 10 + x) % 10) / 10.0;
@@ -277,7 +275,7 @@ function drawGameOverScreen(display) {
     */
 
     const text = 'Press space to start';
-		const textTop = Math.floor(display.rows * 0.6);
+    const textTop = y + GAME_OVER_TEXT.length + 1;
 
     display
       .setCursorPosition(
@@ -288,13 +286,17 @@ function drawGameOverScreen(display) {
   }
 }
 
-function printHello(display, lines, topRatio = 0.5) {
+function printHello(display, lines, textTop) {
 	const textWidth = lines.reduce((acc, obj) => Math.max(acc, obj.length), 0);
 	const textLeft = Math.floor(display.cols / 2 - textWidth / 2);
-	const textTop = Math.floor(display.rows * topRatio - lines.length / 2);
+  //const textTop = Math.floor(display.rows * topRatio - lines.length / 2);
 
 	for (let y = 0; y < lines.length; y++) {
 		const fg = 15;
+
+    if (textTop + y < 0) {
+      continue;
+    }
 
 		display
 			.setCursorPosition(textLeft, textTop + y)

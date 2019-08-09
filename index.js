@@ -94,7 +94,6 @@ class GameState {
     display.setCursorPosition(0, 0).printText(`Tetrijs`);
     display.setCursorPosition(0, 2).printText(`Score: ${this.grid.score}`);
     display.setCursorPosition(0, 3).printText(`Level: ${this.grid.level} (${(this.grid.clearedLines % 10) * 10}%)`);
-    display.setCursorPosition(0, 4).printText(`Time: ${this.grid.timer.timeLeft}    `);
 
     this.grid.draw(display);
   }

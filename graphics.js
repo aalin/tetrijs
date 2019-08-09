@@ -2,6 +2,12 @@ const { log } = require('./utils');
 const Tetrominos = require('./tetromino');
 const palette256 = require('./display/palette').palette256;
 
+const RANDOM_NUMBERS = Array.from({ length: 256 }, Math.random);
+
+function getRandomNumber(index) {
+  return RANDOM_NUMBERS[index % RANDOM_NUMBERS.length];
+}
+
 function* eachPiecePosition(index, rotation, xPos = 0, yPos = 0) {
   const tetromino = Tetrominos.get(index);
   const data = tetromino.getRotation(rotation);
@@ -263,6 +269,13 @@ function drawGameOverScreen(display) {
 		printHello(display, TITLE_TEXT, 0.25);
 		printHello(display, GAME_OVER_TEXT, 0.5);
 
+    /*
+    const f = (x = 0.0) => ((t * 10 + x) % 10) / 10.0;
+    printText(display.setCursorPosition(5, 12), 0, f(0.0), `High score:`);
+    printText(display.setCursorPosition(5, 13), 100, f(100.0), `82000 ACE`);
+    printText(display.setCursorPosition(5, 14), 200, f(200.0), `81000 ACE`);
+    */
+
     const text = 'Press space to start';
 		const textTop = Math.floor(display.rows * 0.6);
 
@@ -287,6 +300,20 @@ function printHello(display, lines, topRatio = 0.5) {
 			.setCursorPosition(textLeft, textTop + y)
 			.printText(lines[y], { fg })
 	}
+}
+
+function printText(display, randomOffset, f, text) {
+  f = Math.max(0.0, Math.min(1.0, f))
+
+  const str = Array.from(text, (chr, i) => {
+    if ((getRandomNumber(randomOffset + i) + 0.3) * f < 0.3) {
+      return ' ';
+    }
+
+    return chr;
+  }).join('');
+
+  display.printText(str + ` ${f.toFixed(2)}`, { fg: 15 });
 }
 
 module.exports = {

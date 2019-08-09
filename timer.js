@@ -13,6 +13,11 @@ class Timer {
     return this;
   }
 
+	get timeLeft() {
+    const now = new Date().getTime();
+		return this._interval - (now - this._lastUpdate);
+	}
+
   update() {
     const now = new Date().getTime();
 

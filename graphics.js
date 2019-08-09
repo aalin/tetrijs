@@ -178,7 +178,29 @@ function drawBackground(display, top, right, bottom, left) {
   }
 }
 
-const GAME_OVER_TEXT = `
+function text(asd) {
+	const lines = asd[0].split('\n');
+
+	while (lines[0].trim() === '') {
+		lines.shift();
+	}
+
+	return lines;
+}
+
+const TITLE_TEXT = text`
+    .                 .             o8o      o8o
+  .o8               .o8             \`"'      \`"'
+.o888oo  .ooooo.  .o888oo oooo d8b oooo     oooo  .oooo.o
+  888   d88' \`88b   888   \`888""8P \`888     \`888 d88(  "8
+  888   888ooo888   888    888      888      888 \`"Y88b.
+  888 . 888    .o   888 .  888      888  .o. 888 o.  )88b
+  "888" \`Y8bod8P'   "888" d888b    o888o Y8P 888 8""888P'
+                                             888
+                                         .o. 88P
+                                         \`Y888P`;
+
+const GAME_OVER_TEXT = text`
   e88'Y88                                  e88 88e
  d888  'Y   ,"Y88b 888 888 8e   ,e e,     d888 888b  Y8b Y888P  ,e e,  888,8,
 C8888 eeee "8" 888 888 888 88b d88 88b   C8888 8888D  Y8b Y8P  d88 88b 888 "
@@ -238,33 +260,33 @@ function drawGameOverScreen(display) {
       }
     }
 
-    const lines = GAME_OVER_TEXT.split('\n');
-
-    while (lines[0].trim() === '') {
-      lines.shift();
-    }
-
-    const textWidth = lines.reduce((acc, obj) => Math.max(acc, obj.length), 0);
-    const textLeft = Math.floor(display.cols / 2 - textWidth / 2);
-    const textTop = Math.floor(display.rows / 2 - lines.length / 2);
-
-    for (let y = 0; y < lines.length; y++) {
-      const fg = 15;
-
-      display
-        .setCursorPosition(textLeft, textTop + y)
-        .printText(lines[y], { fg })
-    }
+		printHello(display, TITLE_TEXT, 0.25);
+		printHello(display, GAME_OVER_TEXT, 0.5);
 
     const text = 'Press space to start';
+		const textTop = Math.floor(display.rows * 0.6);
 
     display
       .setCursorPosition(
         Math.floor(display.cols / 2 - text.length / 2),
-        textTop + lines.length + 2
+        textTop,
       )
       .printText(text, { fg: 15 })
   }
+}
+
+function printHello(display, lines, topRatio = 0.5) {
+	const textWidth = lines.reduce((acc, obj) => Math.max(acc, obj.length), 0);
+	const textLeft = Math.floor(display.cols / 2 - textWidth / 2);
+	const textTop = Math.floor(display.rows * topRatio - lines.length / 2);
+
+	for (let y = 0; y < lines.length; y++) {
+		const fg = 15;
+
+		display
+			.setCursorPosition(textLeft, textTop + y)
+			.printText(lines[y], { fg })
+	}
 }
 
 module.exports = {

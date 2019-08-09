@@ -128,6 +128,7 @@ class Grid {
 
   setPiece(id) {
     this.pieceId = id;
+		log('setPiece', id);
     this.pieceY = 0;
     this.pieceX = Math.floor(this.width / 2);
 
@@ -138,8 +139,6 @@ class Grid {
         this.parent.gameOver(this);
       }
     }
-
-    this.timer.reset().update();
   }
 
   nextPiece() {
@@ -230,6 +229,7 @@ class Grid {
   }
 
   storePiece() {
+		log('storePiece');
     const tetromino = Tetrominos.get(this.pieceId);
     const data = tetromino.getRotation(this.pieceRotation);
     const halfSize = tetromino.halfSize;
@@ -252,9 +252,11 @@ class Grid {
       const idx = ty * this.width;
       const chars = this.data.slice(idx, idx + this.width);
 
+/*
       log(chars.map(chr => {
         return chr ? 'X' : '.';
       }).join(''));
+*/
     }
   }
 
@@ -297,7 +299,9 @@ class Grid {
     const left = center - halfWidth * 2;
     const right = center + halfWidth * 2 + 1;
 
-    const top = 2;
+		const height = this.height + 6;
+
+    const top = Math.floor(display.rows / 2 - height / 2);
     const bottom = top + this.height + 1;
 
     const shadowedColumns = [];
@@ -315,8 +319,8 @@ class Grid {
     }
 
     graphics.drawBackground(display, top, right, bottom, left);
-    graphics.drawContent(display, this.data, shadowedColumns, this.width, left + 1, 3);
-    graphics.drawPiece(display, this.pieceId, this.pieceRotation, left + 1, 3, this.pieceX, this.pieceY);
+    graphics.drawContent(display, this.data, shadowedColumns, this.width, left + 1, top + 1);
+    graphics.drawPiece(display, this.pieceId, this.pieceRotation, left + 1, top + 1, this.pieceX, this.pieceY);
     graphics.drawFrame(display, top, right, bottom, left);
   }
 }

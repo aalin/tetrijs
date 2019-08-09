@@ -1,5 +1,5 @@
 function log(...args) {
-  process.stderr.write(args.map(String).join(' ') + '\n');
+  process.stderr.write(`${new Date().toISOString()}: ` + args.map(String).join(' ') + '\n');
 }
 
 module.exports = {

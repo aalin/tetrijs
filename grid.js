@@ -247,17 +247,6 @@ class Grid {
         }
       }
     }
-
-    for (let ty = 0; ty < this.height; ty++) {
-      const idx = ty * this.width;
-      const chars = this.data.slice(idx, idx + this.width);
-
-/*
-      log(chars.map(chr => {
-        return chr ? 'X' : '.';
-      }).join(''));
-*/
-    }
   }
 
   update() {
@@ -288,6 +277,16 @@ class Grid {
     }
   }
 
+  getGhostPosition() {
+    for (let y = this.pieceY + 1; y < this.pieceY + 20; y++) {
+      if (this.pieceCollidesAt(this.pieceX, y)) {
+        return y - 1;
+      }
+    }
+
+    return -1;
+  }
+
   draw(display) {
     if (this.gameOver) {
       graphics.drawGameOverScreen(display);
@@ -304,26 +303,23 @@ class Grid {
     const top = Math.floor(display.rows / 2 - height / 2) + 2;
     const bottom = top + this.height + 1;
 
-    const shadowedColumns = [];
+    const shadowedCells = [];
     const tetromino = Tetrominos.get(this.pieceId);
     const data = tetromino.getRotation(this.pieceRotation);
 
-    for (let x = 0; x < tetromino.size; x++) {
-      for (let y = 0; y < tetromino.size; y++) {
-        if (data[y][x]) {
-          const idx = Math.floor(this.pieceX + x - tetromino.halfSize);
-          shadowedColumns.push(idx);
-          break;
-        }
-      }
-    }
+    const ghostPositionY = this.getGhostPosition();
 
     const tdiv = 8000;
     const pscale = 1.0;
 
     graphics.drawBackground(display, top, right, bottom, left, tdiv, pscale);
-    graphics.drawContent(display, this.data, shadowedColumns, this.width, left + 1, top + 1);
-    graphics.drawPiece(display, this.pieceId, this.pieceRotation, left + 1, top + 1, this.pieceX, this.pieceY);
+    graphics.drawContent(display, this.data, [], this.width, left, top);
+
+    if (ghostPositionY >= 0) {
+      graphics.drawGhostPiece(display, this.pieceId, this.pieceRotation, left, top, this.pieceX, ghostPositionY);
+    }
+
+    graphics.drawPiece(display, this.pieceId, this.pieceRotation, left, top, this.pieceX, this.pieceY);
     graphics.drawFrame(display, top, right, bottom, left, tdiv, pscale);
   }
 }

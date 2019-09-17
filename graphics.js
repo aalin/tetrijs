@@ -1,12 +1,6 @@
-const { log } = require('./utils');
+const { log, getRandomNumber } = require('./utils');
 const Tetrominos = require('./tetromino');
-const palette256 = require('./display/palette').palette256;
-
-const RANDOM_NUMBERS = Array.from({ length: 256 }, Math.random);
-
-function getRandomNumber(index) {
-  return RANDOM_NUMBERS[index % RANDOM_NUMBERS.length];
-}
+const { palette256, paletteGrayscale } = require('./display/palette');
 
 function* eachPiecePosition(index, rotation, xPos = 0, yPos = 0) {
   const tetromino = Tetrominos.get(index);
@@ -29,11 +23,34 @@ function* eachPiecePosition(index, rotation, xPos = 0, yPos = 0) {
 function drawPiece(display, index, rotation, left, top, xPos, yPos) {
   for (let [x, y, tetromino] of eachPiecePosition(index, rotation, xPos, yPos)) {
     display.setCursorPosition(
-      Math.floor(left + x * 2),
-      Math.floor(top + y)
+      Math.floor(left + x * 2 + 1),
+      Math.floor(top + y + 1)
     );
 
     display.printText("[]", { bg: tetromino.color, fg: 15 })
+  }
+}
+
+function drawGhostPiece(display, index, rotation, left, top, xPos, yPos) {
+  const scale = 1.0;
+  const t = new Date().getTime() / 8000;
+
+  let i = 0;
+
+  for (let [x, y, tetromino] of eachPiecePosition(index, rotation, xPos, yPos)) {
+    display.setCursorPosition(
+      Math.floor(left + x * 2 + 1),
+      Math.floor(top + y + 1)
+    );
+
+    for (let i = 0; i < 2; i++) {
+      const value = plasma(left + x * 2 + i + 1, top + y + 1, t, scale);
+      const bg =
+        palette256(...rgbpalette(value).map(v => v * 0.2));
+        // paletteGrayscale(value * 0.5);
+
+      display.printText("·", { bg, fg: 15 })
+    }
   }
 }
 
@@ -48,7 +65,7 @@ function drawContent(display, data, shadowedColumns, width, left, top) {
       const color = data[y * width + x];
 
       if (color) {
-        display.setCursorPosition(left + x * 2, top + y);
+        display.setCursorPosition(left + x * 2 + 1, top + y + 1);
 
         if (shadowedColumns[0] === x) {
           display.printText(shadowedText, { bg: color, fg: 7 });
@@ -320,6 +337,7 @@ function printText(display, randomOffset, f, text) {
 
 module.exports = {
   drawPiece,
+  drawGhostPiece,
   drawContent,
   drawBackground,
   drawFrame,

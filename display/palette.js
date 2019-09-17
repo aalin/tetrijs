@@ -1,3 +1,5 @@
+const lerp = require('../utils');
+
 function palette256(r, g, b) {
   if (r === 0 && g === 0 && b === 0) {
     return 0;
@@ -70,7 +72,22 @@ function palette16(r, g, b) {
   return base + index % 8;
 }
 
+function paletteGrayscale(value) {
+  const bg = lerp(231, 256, value)
+
+  if (bg < 232) {
+    return 0;
+  }
+
+  if (bg >= 255) {
+    return 15;
+  }
+
+  return Math.floor(bg);
+}
+
 module.exports = {
   palette256,
   palette16,
+  paletteGrayscale,
 };

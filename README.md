@@ -16,11 +16,11 @@ Requires node 8+.
 
 ## Controls
 
-| Control                 | Keys                |
-| ----------------------- | ------------------- |
-| Left                    | j / Left            |
-| Right                   | l / Right           |
-| Rotate clockwise        | k / x / Z / Up      |
-| Rotate counterclockwise | k/ z / X / Shift+Up |
-| Soft drop               | Down                |
-| Hard drop               | Space               |
+| Control                 | Keys                         |
+| ----------------------- | ---------------------------- |
+| Left                    | `j` / `Left`                 |
+| Right                   | `l` / `Right`                |
+| Rotate clockwise        | `k` / `x` / `Z` / `Up`       |
+| Rotate counterclockwise | `K` / `z` / `X` / `Shift+Up` |
+| Soft drop               | `Down`                       |
+| Hard drop               | `Space`                      |

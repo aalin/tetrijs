@@ -143,9 +143,9 @@ module.exports = {
 
   wallKickData(index, toRot, fromRot) {
     switch (index) {
-      case 0:
+      case 0: // I
         return getWallKick(wallKickDataI, toRot, fromRot);
-      case 3:
+      case 3: // o
         return [[0, 0]];
       default:
         return getWallKick(wallKickDataJLSTZ, toRot, fromRot);

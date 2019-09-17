@@ -1,0 +1,6 @@
+#!/usr/bin/env node
+
+const GameState = require('../lib/game_state')
+const Engine = require('../lib/engine')
+
+Engine.run(new GameState());

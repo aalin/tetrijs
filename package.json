@@ -2,9 +2,11 @@
   "name": "tetrijs",
   "version": "0.0.1",
   "description": "",
-  "main": "lib/index.js",
+  "bin": {
+    "tetrijs": "./bin/tetrijs"
+  },
   "scripts": {
-    "start": "node lib/index.js",
+    "start": "./bin/tetrijs",
     "prettier": "prettier --write 'lib/**/*.js'"
   },
   "author": "Andreas Alin",

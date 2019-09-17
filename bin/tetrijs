@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
-const GameState = require('../lib/game_state')
-const Engine = require('../lib/engine')
+const package = require('../package.json');
+
+console.log(`${package.name} v${package.version} (${package.homepage})`);
+
+const GameState = require('../lib/game_state');
+const Engine = require('../lib/engine');
 
 Engine.run(new GameState());

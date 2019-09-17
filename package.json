@@ -2,9 +2,9 @@
   "name": "tetrijs",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node lib/index.js"
   },
   "author": "Andreas Alin",
   "license": "ISC"

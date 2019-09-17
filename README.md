@@ -24,3 +24,4 @@ Requires node 8+.
 | Rotate counterclockwise | `K` / `z` / `X` / `Shift+Up` |
 | Soft drop               | `Down`                       |
 | Hard drop               | `Space`                      |
+| Change piece            | `1`–`7`                      |

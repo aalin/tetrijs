@@ -8,7 +8,7 @@ Requires node 8+.
 
 ## Install
 
-    npm install -g https://github.com/aalin/tetrijs.git
+    npm install -g tetrijs
 
 ## Run
 

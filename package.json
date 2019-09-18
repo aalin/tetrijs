@@ -1,6 +1,6 @@
 {
   "name": "tetrijs",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Tetris clone that runs in iTerm2 (and maybe other terminals)",
   "keywords": [
     "tetris",

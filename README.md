@@ -1,6 +1,6 @@
 # tetrijs
 
-Tetris clone that runs in iTerm2.
+Tetris clone that runs in iTerm2 (and maybe other terminals).
 
 Requires node 8+.
 
